@@ -312,6 +312,24 @@ fetch_verified() {
     return $rc
 }
 
+# latest_github_tag <owner/repo>
+# Prints the highest release version (no leading v). Tries the API first,
+# honoring GITHUB_TOKEN when present (unauthenticated api.github.com calls
+# rate-limit hard on shared CI IPs), then falls back to `git ls-remote`,
+# which has no API rate limit at all.
+latest_github_tag() {
+    local repo="$1" v
+    local auth=()
+    [ -n "${GITHUB_TOKEN:-}" ] && auth=(-H "Authorization: Bearer $GITHUB_TOKEN")
+    v=$(curl -fs "${auth[@]}" "https://api.github.com/repos/$repo/releases/latest" \
+        | grep -Po '"tag_name": "v?\K[^"]*' || true)
+    if [ -z "$v" ]; then
+        v=$(git ls-remote --tags "https://github.com/$repo" 2>/dev/null \
+            | grep -oP 'refs/tags/v?\K[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
+    fi
+    printf '%s' "$v"
+}
+
 # ===========================================
 # 4. SSH Key
 # ===========================================
@@ -533,7 +551,7 @@ if $INSTALL_GO; then
     # with "compiled with go1.xx" / analyzer panics - and recent releases work
     # with the pinned Go above. (Bump the Go pin, and latest golangci-lint
     # follows automatically.)
-    GOLANGCI_VERSION=$(curl -fs "https://api.github.com/repos/golangci/golangci-lint/releases/latest" | grep -Po '"tag_name": "v\K[^"]*' || true)
+    GOLANGCI_VERSION=$(latest_github_tag golangci/golangci-lint)
     if [ -n "$GOLANGCI_VERSION" ]; then
         curl --proto '=https' --tlsv1.2 -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_VERSION}/install.sh" \
             | sh -s -- -b "$HOME/go/bin" "v${GOLANGCI_VERSION}"
@@ -611,8 +629,8 @@ if $INSTALL_CLI_TOOLS; then
     sudo apt -o Acquire::Retries=3 install -y gh
     log_success "GitHub CLI (gh) installed"
     
-    # lazygit
-    LAZYGIT_VERSION=$(curl -fs "https://api.github.com/repos/jesseduffield/lazygit/releases/latest" | grep -Po '"tag_name": "v\K[^"]*' || true)
+    # lazygit (rate-limit-proof tag lookup; not in Ubuntu's apt yet)
+    LAZYGIT_VERSION=$(latest_github_tag jesseduffield/lazygit)
     if [ -n "$LAZYGIT_VERSION" ] && \
        curl -fLo /tmp/lazygit.tar.gz "https://github.com/jesseduffield/lazygit/releases/latest/download/lazygit_${LAZYGIT_VERSION}_Linux_${LGARCH}.tar.gz"; then
         sudo tar xf /tmp/lazygit.tar.gz -C /usr/local/bin lazygit
@@ -625,12 +643,16 @@ if $INSTALL_CLI_TOOLS; then
     fi
     
     # zoxide
-    # zoxide installer pinned @ v0.10.0
-    if fetch_verified "https://raw.githubusercontent.com/ajeetdsouza/zoxide/v0.10.0/install.sh" \
-                      "0c25aed6cce9d56ee0596c9a5df8cbe99ffd0f7a7054de0262234dd268b61404" bash; then
-        log_success "zoxide installed"
+    # zoxide: prefer Ubuntu's signed apt package (24.04+); the vendor script
+    # (which resolves "latest" via the rate-limited GitHub API internally) is
+    # only a fallback for older releases, pinned @ v0.10.0.
+    if sudo apt install -y zoxide 2>/dev/null; then
+        log_success "zoxide installed (apt)"
+    elif fetch_verified "https://raw.githubusercontent.com/ajeetdsouza/zoxide/v0.10.0/install.sh" \
+                        "0c25aed6cce9d56ee0596c9a5df8cbe99ffd0f7a7054de0262234dd268b61404" bash; then
+        log_success "zoxide installed (vendor script)"
     else
-        log_warn "zoxide download failed (network issue?) - install later from https://github.com/ajeetdsouza/zoxide"
+        log_warn "zoxide install failed - install later from https://github.com/ajeetdsouza/zoxide"
     fi
     
     # Starship

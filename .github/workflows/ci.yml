@@ -81,6 +81,9 @@ jobs:
     env:
       GIT_NAME: CI Smoke
       GIT_EMAIL: ci@example.invalid
+      # stage2's GitHub API lookups (golangci-lint latest tag) honor this -
+      # unauthenticated api.github.com calls rate-limit hard on shared runner IPs
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
