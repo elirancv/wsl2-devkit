@@ -17,17 +17,21 @@ What this project is, who it's for, and which of its claims you can verify yours
 - **Reversible by design** — built-in backup (rotated), validated restore, and a health check that tells you precisely what state you're in.
 - **One machine, both worlds** — full Linux tooling and native Windows apps, no dual-boot, no VM window.
 
+The kit enforces this separation by design — not by hope.
+
 ## New to WSL2?
 
-Windows can run a real Linux system *inside* itself — no dual-boot, no slow virtual machine window, no second computer. Microsoft calls it **WSL2** (Windows Subsystem for Linux), and it's how a huge share of professional developers on Windows actually work: Windows for the browser and editor, Linux for the code.
+Developing on Windows used to mean choosing between two compromises: install every runtime directly on Windows and watch it slow down under the clutter, or run Linux in a virtual machine and fight the sluggish filesystem and clunky window.
 
-The catch: setting it up *well* — the languages, the tooling, the SSH keys, the terminal that doesn't look like 1995 — takes an evening of googling and a dozen chances to get something wrong.
+**WSL2** (Windows Subsystem for Linux) removed that trade-off — Windows runs a real Linux system *inside* itself, at native speed, no dual-boot, no second computer. It's how a huge share of professional developers on Windows actually work: Windows for the browser and editor, Linux for the code.
+
+The remaining catch: setting it up *well* — the languages, the tooling, the SSH keys, the terminal that doesn't look like 1995 — takes an evening of googling and a dozen chances to get something wrong.
 
 **wsl2-devkit is that evening, scripted.** Four steps you run in order. It asks what you want (Node? Python? Go? Rust?), installs it the right way, and finishes with a **52-point health check** that proves everything works. It even comes with an undo button: built-in backup, restore, and reset tools.
 
 ## For engineers
 
-wsl2-devkit is a staged, **idempotency-proven** provisioning kit for Windows 10/11 + WSL2 Ubuntu:
+Think of it as **workstation-as-code for the individual engineer** — the rigor fleet tooling applies to server farms (pinning, CI gates, provable idempotency), applied to one bare-metal laptop:
 
 - **Four ordered stages** — winget apps → WSL2 + auto-sized `.wslconfig` → dev toolchain (nvm/pnpm/bun, pyenv/uv, pinned Go, rustup, modern CLI: eza · bat · ripgrep · fzf · zoxide · starship · lazygit · gh) → VS Code extensions installed *into the WSL server*, not inertly on Windows.
 - **Supply chain you can audit** — every vendor installer script is fetched from an **immutable tag/commit ref and verified against a SHA256 committed in the repo** before a byte executes. The Go tarball is version-pinned + checksummed. Releases ship `checksums.txt`.
@@ -35,10 +39,6 @@ wsl2-devkit is a staged, **idempotency-proven** provisioning kit for Windows 10/
 - **Unattended mode** — `--yes` / `--all` / `--profile file.conf` for golden images and repeatable rebuilds.
 - **Day-2 tooling** — health verifier, distro backup with rotation, validated restore, VHD compaction, typed-confirmation reset.
 - **No telemetry. Keys generated locally. MIT.**
-
-## Design principle
-
-**Windows stays clean.** Editors, browsers, and fonts live on Windows; every language runtime, linter, and CLI tool lives in WSL2, where the filesystem is fast. The kit enforces the separation instead of hoping you maintain it.
 
 ## Verify the claims yourself
 
@@ -103,6 +103,8 @@ What a brand-new user actually does, starting from nothing but Windows:
 Total: ~30 minutes, one reboot, and every step is safe to re-run if anything hiccups.
 
 ## FAQ
+
+**How is this different from dotfiles?** Dotfiles personalize an environment that already works — prompts, aliases, editor settings. wsl2-devkit builds the environment underneath: OS features, `.wslconfig` sizing, language toolchains, keys, and the host↔WSL editor bridge. Your dotfiles layer on top nicely.
 
 **Is it safe to run scripts like this?** Read them first — that's the intended workflow. They're plain PowerShell/bash, MIT-licensed, no telemetry, and each release publishes SHA256 checksums so you can audit a tag and run exactly those bytes.
 
