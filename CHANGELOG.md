@@ -3,6 +3,26 @@
 All notable changes to wsl2-devkit are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.3.0] - 2026-07-07
+
+### Added
+- **Banners show the live release version**: every stage script and wsl-tools
+  resolves `git describe --tags` at runtime — `v5.3.0` at a release tag,
+  `v5.3.0-N-gsha` when ahead of it, silent for ZIP copies without `.git`.
+  Replaces the drift-prone hardcoded numbers for good. (#9, #10)
+- `make checksums` writes the `checksums.txt` release artifact, and
+  CONTRIBUTING gains a **Releasing** section documenting the full tag +
+  release procedure. (#8)
+
+### Fixed
+- The version probe no longer leaks git's exit code (128 in tagless/shallow
+  checkouts) as the script's own exit code. (#10)
+
+### Docs
+- README + Troubleshooting now cover the "not digitally signed" trap:
+  `Unblock-File` for ZIP downloads, the `\\wsl.localhost` UNC rule, and the
+  separate Windows PowerShell 5.1 vs pwsh execution policies. (#9)
+
 ## [5.2.0] - 2026-07-07
 
 ### Added
