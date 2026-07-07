@@ -88,10 +88,18 @@ function Install-NerdFont {
     }
 }
 
+# Release version = latest git tag when run from a clone; empty for ZIP
+# downloads (no .git) or when git is missing. History: CHANGELOG.md / tags.
+$DevkitVersion = ""
+try {
+    $tag = git -C $PSScriptRoot describe --tags 2>$null
+    if ($LASTEXITCODE -eq 0 -and $tag) { $DevkitVersion = " $tag" }
+} catch { }
+
 try {
     Clear-Host
     Write-Host "==========================================" -ForegroundColor Cyan
-    Write-Host "  Windows App Bootstrap (winget)" -ForegroundColor Cyan
+    Write-Host "  Windows App Bootstrap (winget)$DevkitVersion" -ForegroundColor Cyan
     Write-Host "==========================================" -ForegroundColor Cyan
 
     # ----- winget must exist AND actually run -----

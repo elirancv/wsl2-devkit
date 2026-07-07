@@ -10,6 +10,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Release version = latest git tag when run from a clone; empty for ZIP
+# downloads (no .git) or when git is missing. History: CHANGELOG.md / tags.
+$DevkitVersion = ""
+try {
+    $tag = git -C $PSScriptRoot describe --tags 2>$null
+    if ($LASTEXITCODE -eq 0 -and $tag) { $DevkitVersion = " $tag" }
+} catch { }
+
 # wsl.exe's OWN subcommands (--list/--version/--status) emit UTF-16 (LE) with
 # embedded nulls. Do NOT force [Console]::OutputEncoding globally: that would also
 # mangle the UTF-8 passthrough from 'wsl -- <linux cmd>' (e.g. apt output, which
@@ -84,7 +92,7 @@ function Show-Header {
     Clear-Host
     Write-Host ""
     Write-Host "==========================================" -ForegroundColor Cyan
-    Write-Host "  WSL Management Tools" -ForegroundColor Cyan
+    Write-Host "  WSL Management Tools$DevkitVersion" -ForegroundColor Cyan
     Write-Host "==========================================" -ForegroundColor Cyan
 }
 

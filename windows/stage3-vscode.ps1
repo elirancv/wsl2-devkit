@@ -14,13 +14,21 @@ function Write-Success { param([string]$Message); Write-Host "   [OK] $Message" 
 function Write-Warn { param([string]$Message); Write-Host "   [!] $Message" -ForegroundColor Yellow }
 function Write-Err { param([string]$Message); Write-Host "   [X] $Message" -ForegroundColor Red }
 
+# Release version = latest git tag when run from a clone; empty for ZIP
+# downloads (no .git) or when git is missing. History: CHANGELOG.md / tags.
+$DevkitVersion = ""
+try {
+    $tag = git -C $PSScriptRoot describe --tags 2>$null
+    if ($LASTEXITCODE -eq 0 -and $tag) { $DevkitVersion = " $tag" }
+} catch { }
+
 # ===========================================
 # Header
 # ===========================================
 Clear-Host
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "  VSCode/Cursor Configuration" -ForegroundColor Cyan
+Write-Host "  VSCode/Cursor Configuration$DevkitVersion" -ForegroundColor Cyan
 Write-Host "  Stage 3: Extensions & Settings" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
