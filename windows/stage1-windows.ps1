@@ -66,6 +66,9 @@ try {
     $tag = git -C $PSScriptRoot describe --tags 2>$null
     if ($LASTEXITCODE -eq 0 -and $tag) { $DevkitVersion = " $tag" }
 } catch { }
+# git exits 128 when there's no repo/tags; don't let that leak as the script's
+# exit code (CI's shell wrapper ends with `exit $LASTEXITCODE`)
+$global:LASTEXITCODE = 0
 
 try {
 
