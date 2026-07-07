@@ -131,21 +131,20 @@ if grep -q '^# END Development Environment Configuration$' ~/.bashrc 2>/dev/null
 else
   opt "end marker" "older block without end-marker (cosmetic)"
 fi
-# Each helper is written only when its language was selected, so a missing one
-# is a real failure *only* when that language is installed; otherwise warn.
+# Each helper is written only when its language was selected. Detect that
+# selection by the tool the helper actually invokes (pnpm/uv/go/cargo) - NOT by
+# python/node generally, since stock Ubuntu ships python3 and CI images ship
+# node, neither of which means stage2's Python/Node setup ever ran.
 for fn in newweb newpy newgo newrust; do
   case "$fn" in
-    newweb)  rt=node ;;
-    newpy)   rt=python ;;
+    newweb)  rt=pnpm ;;
+    newpy)   rt=uv ;;
     newgo)   rt=go ;;
     newrust) rt=cargo ;;
   esac
-  have_rt=false
-  command -v "$rt" >/dev/null 2>&1 && have_rt=true
-  [ "$fn" = newpy ] && command -v python3 >/dev/null 2>&1 && have_rt=true
   if grep -qE "^\s*${fn}\(\)" ~/.bashrc 2>/dev/null; then
     ok "helper: $fn"
-  elif $have_rt; then
+  elif command -v "$rt" >/dev/null 2>&1; then
     bad "helper: $fn" "missing though $rt is installed - re-run stage2-ubuntu.sh"
   else
     opt "helper: $fn" "language not selected"

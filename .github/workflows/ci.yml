@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint-shell:
+    name: ShellCheck + syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: bash -n + shellcheck (same set as `make lint`)
+        run: |
+          set -euo pipefail
+          for f in wsl/*.sh demo/lib/*.sh; do
+            echo "== $f =="
+            bash -n "$f"
+            shellcheck -S warning "$f"
+          done
+          echo "All shell scripts clean."
+
+  lint-powershell:
+    name: PSScriptAnalyzer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Analyze windows/*.ps1
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser
+          $warnings = Invoke-ScriptAnalyzer -Path windows -Recurse -Severity Warning
+          if ($warnings) {
+            Write-Host "`n--- Warnings (informational) ---"
+            $warnings | Format-Table RuleName, ScriptName, Line, Message -AutoSize | Out-String | Write-Host
+          }
+          $errors = Invoke-ScriptAnalyzer -Path windows -Recurse -Severity Error
+          if ($errors) {
+            Write-Host "`n--- Errors (blocking) ---"
+            $errors | Format-Table RuleName, ScriptName, Line, Message -AutoSize | Out-String | Write-Host
+            exit 1
+          }
+          Write-Host "No PSScriptAnalyzer errors."
+
+  smoke-stage2:
+    name: "stage2 end-to-end: install twice, verify"
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GIT_NAME: CI Smoke
+      GIT_EMAIL: ci@example.invalid
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Run 1: provision the runner with the CI profile"
+        run: bash wsl/stage2-ubuntu.sh --profile tests/profiles/ci.conf
+
+      - name: Snapshot ~/.bashrc after run 1
+        run: cp ~/.bashrc /tmp/bashrc.run1
+
+      - name: "Run 2: re-run to prove idempotency"
+        run: bash wsl/stage2-ubuntu.sh --profile tests/profiles/ci.conf
+
+      - name: "Assert: managed block written exactly once, byte-identical across runs"
+        run: |
+          set -euo pipefail
+          starts=$(grep -c '^# Development Environment Configuration$' ~/.bashrc)
+          ends=$(grep -c '^# END Development Environment Configuration$' ~/.bashrc)
+          echo "start markers: $starts, end markers: $ends"
+          [ "$starts" -eq 1 ] && [ "$ends" -eq 1 ]
+          diff /tmp/bashrc.run1 ~/.bashrc && echo "~/.bashrc identical after re-run (idempotent)"
+
+      - name: "Assert: health check passes (verify-setup.sh)"
+        run: |
+          bash wsl/verify-setup.sh

@@ -134,7 +134,7 @@ Select what to install:
 Languages & Runtimes:
    Install Node.js? (nvm + pnpm + bun) [Y/n]: 
    Install Python? (pyenv + uv) [Y/n]: 
-   Install Go? (latest official) [Y/n]: 
+   Install Go? (pinned official release) [Y/n]: 
    Install Rust? (rustup) [y/N]: 
 
 Tools:
@@ -202,7 +202,7 @@ newpy NAME   # Create Python project with venv
 
 | Tool | Description |
 |------|-------------|
-| **Go** | Latest version from golang.org |
+| **Go** | Pinned release from go.dev, SHA256-verified against an in-repo checksum |
 | **gopls** | Language server |
 | **delve** | Debugger |
 | **golangci-lint** | Linter |
@@ -277,6 +277,20 @@ z PARTIAL    # zoxide (smart cd)
 chmod +x stage2-ubuntu.sh
 ./stage2-ubuntu.sh
 ```
+
+### Non-Interactive Mode
+
+For unattended provisioning (golden images, CI, repeatable rebuilds):
+
+| Invocation | Behavior |
+|------------|----------|
+| `./stage2-ubuntu.sh --yes` | The menu's defaults: Node, Python, Go, CLI tools on; Rust, Docker, GPG off |
+| `./stage2-ubuntu.sh --all` | Everything on (the GPG key is generated **without** a passphrase — pinentry needs a TTY; protect it later with `gpg --passwd`) |
+| `./stage2-ubuntu.sh --profile FILE` | `--yes` baseline, then `FILE` is sourced for overrides (e.g. `INSTALL_RUST=true`, `SETUP_GPG=false`) |
+
+Git identity resolves from existing `git config --global`, else the `GIT_NAME`
+and `GIT_EMAIL` environment variables; the run fails fast if neither is set.
+This is the same path CI uses to smoke-test the kit on every push.
 
 ---
 

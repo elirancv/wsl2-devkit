@@ -3,6 +3,31 @@
 All notable changes to wsl2-devkit are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.0.0] - 2026-07-07
+
+### Added
+- **Non-interactive mode** for `stage2-ubuntu.sh`: `--yes` (menu defaults),
+  `--all` (everything), `--profile FILE` (defaults + sourced overrides), with
+  git identity from existing config or `GIT_NAME`/`GIT_EMAIL` env vars.
+- **CI on every push** (GitHub Actions): ShellCheck + `bash -n` on all shell
+  scripts, PSScriptAnalyzer on all PowerShell scripts, and an end-to-end smoke
+  test that runs the real Stage 2 **twice** on a clean Ubuntu runner, asserts
+  the managed `~/.bashrc` block is byte-identical after the re-run, and passes
+  the 52-check health verifier.
+- Tagged releases with published script checksums.
+
+### Changed
+- **Go is now version-pinned and verified against a SHA256 committed in this
+  repo** — previously the checksum was fetched at runtime from go.dev, the same
+  origin as the tarball, which cannot detect a compromised origin.
+- **The nvm installer is checksum-verified in-repo** against its tagged ref and
+  downloaded to a file before execution (a truncated transfer can never run).
+
+### Fixed
+- `verify-setup.sh` detects language selection by the tool each `newX` helper
+  actually invokes (`pnpm`/`uv`/`go`/`cargo`) — keying on `python3`/`node`
+  falsely demanded helpers on systems where those ship preinstalled.
+
 ## [4.5] - 2026-07-07
 
 ### Changed

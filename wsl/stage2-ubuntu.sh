@@ -36,6 +36,42 @@ INSTALL_RUST=false
 INSTALL_CLI_TOOLS=false
 INSTALL_DOCKER_CLI=false
 SETUP_GPG=false
+GPG_PASSPHRASE_PROTECT=false
+
+# ===========================================
+# Arguments (non-interactive support)
+# ===========================================
+# --yes          accept the defaults (Node/Python/Go/CLI on; Rust/Docker/GPG off)
+# --all          install everything (GPG key generated WITHOUT a passphrase -
+#                pinentry needs a TTY; protect it later with gpg --passwd)
+# --profile F    like --yes, then source F to override selections, e.g.:
+#                  INSTALL_RUST=true
+#                  SETUP_GPG=false
+# In non-interactive mode git identity comes from existing global git config,
+# or the GIT_NAME / GIT_EMAIL environment variables.
+NONINTERACTIVE=false
+ALL_COMPONENTS=false
+PROFILE_FILE=""
+
+usage() {
+    grep '^# --' "$0" | sed 's/^# /  /'
+    echo "  (no flags)     interactive menu"
+}
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --yes)     NONINTERACTIVE=true ;;
+        --all)     NONINTERACTIVE=true; ALL_COMPONENTS=true ;;
+        --profile) NONINTERACTIVE=true; PROFILE_FILE="${2:-}"; shift
+                   [ -f "$PROFILE_FILE" ] || { log_error "profile not found: $PROFILE_FILE"; exit 1; } ;;
+        -h|--help) echo "Usage: $0 [--yes|--all|--profile FILE]"; usage; exit 0 ;;
+        *)         log_error "unknown option: $1 (see --help)"; exit 1 ;;
+    esac
+    shift
+done
+
+# Pause prompts ("press Enter") become no-ops when non-interactive
+pause_enter() { $NONINTERACTIVE || read -r -p "$1" _ || true; }
 
 # ===========================================
 # Header
@@ -48,48 +84,70 @@ echo -e "${CYAN}==========================================${NC}"
 echo ""
 
 # ===========================================
-# Interactive Selection
+# Selection (interactive menu, or flags/profile when non-interactive)
 # ===========================================
-echo -e "${YELLOW}Select what to install:${NC}"
-echo ""
+if $NONINTERACTIVE; then
+    # --yes baseline = the same defaults the menu offers
+    INSTALL_NODE=true
+    INSTALL_PYTHON=true
+    INSTALL_GO=true
+    INSTALL_CLI_TOOLS=true
+    if $ALL_COMPONENTS; then
+        INSTALL_RUST=true
+        INSTALL_DOCKER_CLI=true
+        SETUP_GPG=true
+    fi
+    if [ -n "$PROFILE_FILE" ]; then
+        # shellcheck source=/dev/null
+        source "$PROFILE_FILE"
+        log_info "Selections loaded from profile: $PROFILE_FILE"
+    fi
+    # pinentry needs a TTY; never attempt a passphrase-protected key here
+    if $GPG_PASSPHRASE_PROTECT; then
+        log_warn "GPG passphrase protection needs a TTY - generating without (protect later: gpg --passwd)"
+        GPG_PASSPHRASE_PROTECT=false
+    fi
+else
+    echo -e "${YELLOW}Select what to install:${NC}"
+    echo ""
 
-# Languages
-echo -e "${BOLD}Languages & Runtimes:${NC}"
-echo ""
+    # Languages
+    echo -e "${BOLD}Languages & Runtimes:${NC}"
+    echo ""
 
-read -p "   Install Node.js? (nvm + pnpm + bun) [Y/n]: " choice
-[[ "$choice" != "n" && "$choice" != "N" ]] && INSTALL_NODE=true
+    read -p "   Install Node.js? (nvm + pnpm + bun) [Y/n]: " choice
+    [[ "$choice" != "n" && "$choice" != "N" ]] && INSTALL_NODE=true
 
-read -p "   Install Python? (pyenv + uv) [Y/n]: " choice
-[[ "$choice" != "n" && "$choice" != "N" ]] && INSTALL_PYTHON=true
+    read -p "   Install Python? (pyenv + uv) [Y/n]: " choice
+    [[ "$choice" != "n" && "$choice" != "N" ]] && INSTALL_PYTHON=true
 
-read -p "   Install Go? (latest official) [Y/n]: " choice
-[[ "$choice" != "n" && "$choice" != "N" ]] && INSTALL_GO=true
+    read -p "   Install Go? (pinned official release) [Y/n]: " choice
+    [[ "$choice" != "n" && "$choice" != "N" ]] && INSTALL_GO=true
 
-read -p "   Install Rust? (rustup) [y/N]: " choice
-[[ "$choice" == "y" || "$choice" == "Y" ]] && INSTALL_RUST=true
+    read -p "   Install Rust? (rustup) [y/N]: " choice
+    [[ "$choice" == "y" || "$choice" == "Y" ]] && INSTALL_RUST=true
 
-echo ""
-echo -e "${BOLD}Tools:${NC}"
-echo ""
+    echo ""
+    echo -e "${BOLD}Tools:${NC}"
+    echo ""
 
-read -p "   Install modern CLI tools? (eza, bat, ripgrep, fzf, lazygit, gh, starship) [Y/n]: " choice
-[[ "$choice" != "n" && "$choice" != "N" ]] && INSTALL_CLI_TOOLS=true
+    read -p "   Install modern CLI tools? (eza, bat, ripgrep, fzf, lazygit, gh, starship) [Y/n]: " choice
+    [[ "$choice" != "n" && "$choice" != "N" ]] && INSTALL_CLI_TOOLS=true
 
-read -p "   Install Docker CLI? (without Docker Desktop) [y/N]: " choice
-[[ "$choice" == "y" || "$choice" == "Y" ]] && INSTALL_DOCKER_CLI=true
+    read -p "   Install Docker CLI? (without Docker Desktop) [y/N]: " choice
+    [[ "$choice" == "y" || "$choice" == "Y" ]] && INSTALL_DOCKER_CLI=true
 
-echo ""
-echo -e "${BOLD}Security:${NC}"
-echo ""
+    echo ""
+    echo -e "${BOLD}Security:${NC}"
+    echo ""
 
-read -p "   Setup GPG for signed commits? [y/N]: " choice
-[[ "$choice" == "y" || "$choice" == "Y" ]] && SETUP_GPG=true
+    read -p "   Setup GPG for signed commits? [y/N]: " choice
+    [[ "$choice" == "y" || "$choice" == "Y" ]] && SETUP_GPG=true
 
-GPG_PASSPHRASE_PROTECT=false
-if $SETUP_GPG; then
-    read -p "   Protect GPG key with a passphrase? (recommended) [y/N]: " choice
-    [[ "$choice" == "y" || "$choice" == "Y" ]] && GPG_PASSPHRASE_PROTECT=true
+    if $SETUP_GPG; then
+        read -p "   Protect GPG key with a passphrase? (recommended) [y/N]: " choice
+        [[ "$choice" == "y" || "$choice" == "Y" ]] && GPG_PASSPHRASE_PROTECT=true
+    fi
 fi
 
 # ===========================================
@@ -115,10 +173,12 @@ $INSTALL_DOCKER_CLI && echo "      ✓ Docker CLI"
 $SETUP_GPG && echo "      ✓ GPG signing"
 echo ""
 
-read -p "Continue with installation? [Y/n]: " confirm
-if [[ "$confirm" == "n" || "$confirm" == "N" ]]; then
-    echo "Cancelled."
-    exit 0
+if ! $NONINTERACTIVE; then
+    read -p "Continue with installation? [Y/n]: " confirm
+    if [[ "$confirm" == "n" || "$confirm" == "N" ]]; then
+        echo "Cancelled."
+        exit 0
+    fi
 fi
 
 # ===========================================
@@ -186,10 +246,23 @@ log_step "Configuring Git..."
 
 sudo apt install -y git
 
-echo ""
-echo -e "${CYAN}Enter your Git details:${NC}"
-read -p "   Full name: " git_name
-read -p "   Email: " git_email
+# Identity: prompt interactively; non-interactive runs take existing global
+# git config, overridable via the GIT_NAME / GIT_EMAIL environment variables.
+git_name=$(git config --global user.name 2>/dev/null || true)
+git_email=$(git config --global user.email 2>/dev/null || true)
+if $NONINTERACTIVE; then
+    git_name="${GIT_NAME:-$git_name}"
+    git_email="${GIT_EMAIL:-$git_email}"
+    if [ -z "$git_name" ] || [ -z "$git_email" ]; then
+        log_error "non-interactive mode needs GIT_NAME and GIT_EMAIL env vars (or existing git config)"
+        exit 1
+    fi
+else
+    echo ""
+    echo -e "${CYAN}Enter your Git details:${NC}"
+    read -p "   Full name: " git_name
+    read -p "   Email: " git_email
+fi
 
 git config --global user.name "$git_name"
 git config --global user.email "$git_email"
@@ -244,7 +317,7 @@ SSH_CONFIG
     echo ""
     cat ~/.ssh/id_ed25519.pub
     echo ""
-    read -p "   Press Enter after copying..."
+    pause_enter "   Press Enter after copying..."
 else
     log_info "SSH key already exists"
 fi
@@ -264,8 +337,19 @@ if $INSTALL_NODE; then
     # NVM
     export NVM_DIR="$HOME/.nvm"
     if [ ! -d "$NVM_DIR" ]; then
-        curl --proto '=https' --tlsv1.2 -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash \
-            || log_warn "nvm download failed (network issue?) - skipping Node.js"
+        # Tagged ref + checksum committed in this repo: verifies the BYTES we
+        # audited, not just that TLS reached github (tags can be force-moved).
+        # Downloaded to a file first so a truncated transfer can never execute.
+        NVM_INSTALL_SHA256="abdb525ee9f5b48b34d8ed9fc67c6013fb0f659712e401ecd88ab989b3af8f53"
+        nvm_tmp=$(mktemp)
+        if curl --proto '=https' --tlsv1.2 -fso "$nvm_tmp" \
+               "https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh" \
+           && echo "$NVM_INSTALL_SHA256  $nvm_tmp" | sha256sum -c --quiet; then
+            bash "$nvm_tmp" || log_warn "nvm installer failed - skipping Node.js"
+        else
+            log_warn "nvm download failed or checksum mismatch - skipping Node.js"
+        fi
+        rm -f "$nvm_tmp"
     fi
     if [ -s "$NVM_DIR/nvm.sh" ]; then
         \. "$NVM_DIR/nvm.sh"
@@ -381,26 +465,26 @@ fi
 if $INSTALL_GO; then
     log_step "Installing Go..."
 
-    GO_VERSION=$(curl -fs "https://go.dev/VERSION?m=text" | head -1 || true)
-    if [ -z "$GO_VERSION" ]; then
-        log_error "Could not determine latest Go version (network issue?)"
-        exit 1
-    fi
-    log_info "Latest version: $GO_VERSION"
+    # Pinned release, verified against checksums committed IN THIS REPO (not
+    # fetched from go.dev at runtime - a checksum served by the same origin as
+    # the tarball can't detect a compromised origin). Audited at pin time; bump
+    # the version and both hashes together (values from go.dev/dl/?mode=json).
+    GO_VERSION="go1.26.4"
+    GO_SHA256_AMD64="1153d3d50e0ac764b447adfe05c2bcf08e889d42a02e0fe0259bd47f6733ad7f"
+    GO_SHA256_ARM64="ef758ae7c6cf9267c9c0ef080b8965f453d89ab2d25d9eb22de4405925238768"
+
+    case "$GOARCH" in
+        amd64) GO_SHA256="$GO_SHA256_AMD64" ;;
+        arm64) GO_SHA256="$GO_SHA256_ARM64" ;;
+    esac
+    log_info "Pinned version: $GO_VERSION"
 
     GO_TARBALL="${GO_VERSION}.linux-${GOARCH}.tar.gz"
     wget -q "https://go.dev/dl/${GO_TARBALL}" -O /tmp/go.tar.gz
 
-    # Verify checksum against the official one from go.dev
-    GO_SHA256=$(curl -fs "https://go.dev/dl/?mode=json" | jq -r \
-        --arg v "$GO_VERSION" --arg f "$GO_TARBALL" \
-        '.[] | select(.version == $v) | .files[] | select(.filename == $f) | .sha256' || true)
-    if [ -n "$GO_SHA256" ]; then
-        echo "$GO_SHA256  /tmp/go.tar.gz" | sha256sum -c --quiet
-        log_success "Checksum verified"
-    else
-        log_warn "Could not fetch checksum - skipping verification"
-    fi
+    # Integrity failure is a hard stop, never a warning
+    echo "$GO_SHA256  /tmp/go.tar.gz" | sha256sum -c --quiet
+    log_success "Checksum verified (pinned in-repo)"
 
     sudo rm -rf /usr/local/go
     sudo tar -C /usr/local -xzf /tmp/go.tar.gz
@@ -413,11 +497,11 @@ if $INSTALL_GO; then
     /usr/local/go/bin/go install golang.org/x/tools/gopls@latest || log_warn "gopls install failed (network?) - re-run stage2 later"
     /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest || log_warn "delve install failed (network?) - re-run stage2 later"
 
-    # golangci-lint: track the LATEST release instead of pinning. We install the
-    # latest Go (above), and golangci-lint is strict about the Go toolchain it was
-    # built against - a stale pin fails against a newer Go with "compiled with
-    # go1.xx" / analyzer panics. Fetching latest keeps the two paired (this also
-    # picks up v2.x, matching the docs).
+    # golangci-lint: track the LATEST release. golangci-lint is strict about the
+    # Go toolchain it was built against - a stale pin fails against a newer Go
+    # with "compiled with go1.xx" / analyzer panics - and recent releases work
+    # with the pinned Go above. (Bump the Go pin, and latest golangci-lint
+    # follows automatically.)
     GOLANGCI_VERSION=$(curl -fs "https://api.github.com/repos/golangci/golangci-lint/releases/latest" | grep -Po '"tag_name": "v\K[^"]*' || true)
     if [ -n "$GOLANGCI_VERSION" ]; then
         curl --proto '=https' --tlsv1.2 -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_VERSION}/install.sh" \
@@ -591,7 +675,7 @@ if $SETUP_GPG; then
             # Interactive: gpg-agent prompts for a passphrase (cached after first use)
             log_warn "A passphrase dialog will appear NEXT - have your passphrase ready."
             log_warn "It times out after ~1 minute; type it twice, Tab to <OK>, Enter."
-            read -p "   Press Enter when ready..." _
+            pause_enter "   Press Enter when ready..."
             # Non-fatal: a timed-out/cancelled dialog must not abort the whole
             # setup (everything after this section would be lost)
             set +e
@@ -640,7 +724,7 @@ EOF
         echo ""
         gpg --armor --export "$existing_key"
         echo ""
-        read -p "   Press Enter to continue..."
+        pause_enter "   Press Enter to continue..."
     else
         log_warn "Could not create GPG key. You can set it up manually later."
     fi

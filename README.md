@@ -6,6 +6,7 @@
 ![WSL2](https://img.shields.io/badge/WSL2-Ubuntu-E95420?logo=ubuntu&logoColor=white)
 ![Shell](https://img.shields.io/badge/shell-PowerShell%20%2B%20Bash-5391FE?logo=powershell&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
+[![CI](https://github.com/elirancv/wsl2-devkit/actions/workflows/ci.yml/badge.svg)](https://github.com/elirancv/wsl2-devkit/actions/workflows/ci.yml)
 
 <p align="center">
   <img src="demo/devkit-demo.gif" alt="wsl2-devkit walkthrough — Stage 1 .wslconfig, Stage 2 interactive toolchain, then real eza / git / lazygit" width="820">
@@ -62,6 +63,9 @@ wsl2-devkit/
 │   ├── devkit-demo.tape      # walkthrough script
 │   ├── devkit-demo.gif       # rendered hero GIF (shown above)
 │   └── lib/                  # stage reproductions used by the walkthrough
+├── tests/
+│   └── profiles/ci.conf      # selection profile for the CI smoke test
+├── .github/workflows/ci.yml  # ShellCheck + PSScriptAnalyzer + twice-run smoke
 ├── Makefile                  # make verify / lint / demo / help  (run in WSL)
 ├── CHANGELOG.md
 └── LICENSE
@@ -105,6 +109,15 @@ Clone this repo inside WSL (or copy `wsl/stage2-ubuntu.sh` into your home dir), 
 chmod +x stage2-ubuntu.sh
 ./stage2-ubuntu.sh          # interactive: pick Node / Python / Go / Rust
 exec $SHELL -l              # reload your shell afterwards
+```
+
+Unattended? Stage 2 also runs fully non-interactive:
+
+```bash
+./stage2-ubuntu.sh --yes            # the menu's defaults, no prompts
+./stage2-ubuntu.sh --all            # everything (GPG key without passphrase)
+./stage2-ubuntu.sh --profile my.conf   # defaults + your INSTALL_*=true/false overrides
+# git identity comes from existing git config, or GIT_NAME= / GIT_EMAIL= env vars
 ```
 
 ### Stage 3 — VS Code *(back in PowerShell)*
@@ -201,12 +214,16 @@ doesn't do:
 - **Keys stay local.** The Ed25519 SSH key and optional GPG signing key are
   generated on your machine and never leave it — you paste the *public* half into
   GitHub yourself.
-- **Downloads are over TLS from official sources.** apt uses Ubuntu's signed
-  repos; the Go tarball is **SHA256-verified** before install; the language
-  installers (nvm, pyenv, uv, bun, rustup, starship, zoxide) are the vendors'
-  official scripts fetched with `--proto '=https' --tlsv1.2`. Versions are pinned
-  where an upstream publishes stable checksums; otherwise the latest signed
-  release is used.
+- **Downloads are over TLS from official sources — checksummed where it counts.**
+  apt uses signed repos; the **Go release is version-pinned and verified against a
+  SHA256 committed in this repo** (not fetched from the same origin at runtime);
+  the **nvm installer is pinned to a tagged ref and checksum-verified in-repo**
+  before it executes. The remaining vendor installers (pyenv, uv, bun, rustup,
+  starship, zoxide) publish no stable checksums; they're fetched with
+  `--proto '=https' --tlsv1.2` from the vendors' official domains.
+- **CI-tested on every push.** ShellCheck + PSScriptAnalyzer gate the scripts, and
+  a GitHub Actions job runs the real Stage 2 **twice** on a clean Ubuntu runner,
+  asserts the second run changes nothing, then passes the 52-check verifier.
 - **Idempotent and network-tolerant.** Every stage is safe to re-run — the managed
   `~/.bashrc` block is replaced (not duplicated) between markers, and a flaky
   network on any single download degrades to a warning instead of aborting the run.
