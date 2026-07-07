@@ -16,23 +16,7 @@
 
 wsl2-devkit provisions a fresh machine in four staged scripts: baseline Windows apps, WSL2 + Ubuntu, the full Linux dev toolchain, and VS Code — then hands you a one-command **health check** to prove it all worked.
 
-**Design principle:** Windows stays clean. Editors, browsers and fonts live on Windows; every language runtime, linter and CLI tool lives in WSL2, where your code runs fast. Think of it as **workstation-as-code** — the rigor fleet tooling applies to server farms, applied to one machine. The kit enforces the separation by design, not by hope.
-
-<details>
-<summary><strong>New to WSL2?</strong> What it is and why isolation matters</summary>
-
-Developing on Windows used to mean choosing between two compromises: install every runtime directly on Windows and watch it slow down under the clutter, or run Linux in a virtual machine and fight the sluggish filesystem and clunky window.
-
-**WSL2** (Windows Subsystem for Linux) removed that trade-off — Windows runs a real Linux system *inside* itself, at native speed, no dual-boot, no second computer. It's how a huge share of professional developers on Windows actually work: Windows for the browser and editor, Linux for the code.
-
-Isolation is what makes it liberating:
-
-- **Experiment freely** — languages, tools, and config live inside the Linux environment, which you can rebuild from scratch in minutes whenever you choose. Windows never notices.
-- **Windows stays fast and clean** — no runtimes, PATH clutter, or daemons on the host.
-- **Reversible by design** — built-in backup (rotated), validated restore, and a health check that tells you precisely what state you're in.
-- **One machine, both worlds** — full Linux tooling and native Windows apps, no dual-boot, no VM window.
-
-</details>
+**Design principle:** Windows stays clean. Editors, browsers and fonts live on Windows; every language runtime, linter and CLI tool lives in WSL2, where your code runs fast.
 
 ---
 
@@ -255,29 +239,11 @@ doesn't do:
   `~/.bashrc` block is replaced (not duplicated) between markers, and a flaky
   network on any single download degrades to a warning instead of aborting the run.
 
-Don't take any of this on faith — each claim maps to something checkable:
-
-| Claim | Where to check |
-|---|---|
-| ~30 minutes, fresh PC → verified dev machine | Stage timings in the quick start above |
-| 52-check health verifier | [wsl/verify-setup.sh](wsl/verify-setup.sh), run on every CI push |
-| 8/8 vendor installers pinned + checksum-verified in-repo | `fetch_verified()` in [wsl/stage2-ubuntu.sh](wsl/stage2-ubuntu.sh) |
-| Idempotency is CI-enforced, not claimed | Twice-run byte-identical assert in [ci.yml](.github/workflows/ci.yml) |
-| Every release ships script checksums | `checksums.txt` on each [release](https://github.com/elirancv/wsl2-devkit/releases) |
-
 ## Requirements
 
 - Windows 10 version 2004 (build 19041) or later, or Windows 11
 - Virtualization enabled in firmware (for WSL2)
 - Administrator access for Stage 1
-
-## FAQ
-
-**How is this different from dotfiles?** Dotfiles personalize an environment that already works — prompts, aliases, editor settings. wsl2-devkit builds the environment underneath: OS features, `.wslconfig` sizing, language toolchains, keys, and the host↔WSL editor bridge. Your dotfiles layer on top nicely.
-
-**I already have WSL2.** Stage 2 alone still gets you the toolchain + shell setup, and `verify-setup.sh` will tell you what's missing. Everything is safe to re-run.
-
-**Why not Dev Containers / Ansible?** Different job. This is a *personal machine* bootstrap optimized for native speed and a clean host — not fleet configuration management. The scaffolding it installs works fine with containers on top.
 
 ## Documentation
 
