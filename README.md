@@ -89,6 +89,9 @@ wsl2-devkit/
 
 **Total: ~30 minutes.** Stages run in order; each is idempotent (safe to re-run).
 
+> [!IMPORTANT]
+> **Got the scripts as a ZIP download?** Windows marks them as remote and `RemoteSigned` will refuse to run them ("not digitally signed"). Unblock once, from the extracted folder: `Get-ChildItem -Recurse *.ps1 | Unblock-File`. Also run from a local path (e.g. `C:\...`) — never from `\\wsl.localhost\...`, which always counts as remote. A `git clone` on the Windows side avoids all of this.
+
 ### Stage 0 — Windows apps *(optional, recommended)*
 Installs browser, editor, Windows Terminal, Git, PowerToys, gsudo and the
 JetBrainsMono Nerd Font (so WSL CLI icons render). Self-elevates; skips anything

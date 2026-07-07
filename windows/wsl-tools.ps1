@@ -84,7 +84,7 @@ function Show-Header {
     Clear-Host
     Write-Host ""
     Write-Host "==========================================" -ForegroundColor Cyan
-    Write-Host "  WSL Management Tools v4.3" -ForegroundColor Cyan
+    Write-Host "  WSL Management Tools" -ForegroundColor Cyan
     Write-Host "==========================================" -ForegroundColor Cyan
 }
 
