@@ -37,11 +37,10 @@ GIT_NAME="Test" GIT_EMAIL="test@example.invalid" ./wsl/stage2-ubuntu.sh --profil
 ### Bumping the Go pin
 
 ```bash
-curl -fs "https://go.dev/dl/?mode=json" | jq -r \
-  '.[0] | .version as $v | .files[] | select(.os=="linux" and (.arch=="amd64" or .arch=="arm64") and .kind=="archive") | "\($v) \(.arch) \(.sha256)"'
+make bump-go   # fetches the latest release + checksums and rewrites the pin in-place
 ```
 
-Update `GO_VERSION`, `GO_SHA256_AMD64`, and `GO_SHA256_ARM64` together in `wsl/stage2-ubuntu.sh`.
+Review the diff it prints, then commit. (It updates `GO_VERSION`, `GO_SHA256_AMD64`, and `GO_SHA256_ARM64` together in `wsl/stage2-ubuntu.sh` from `go.dev/dl/?mode=json`.)
 
 ## Pull Requests
 
