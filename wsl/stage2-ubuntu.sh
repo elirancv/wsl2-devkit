@@ -533,7 +533,16 @@ if $INSTALL_GO; then
     # with "compiled with go1.xx" / analyzer panics - and recent releases work
     # with the pinned Go above. (Bump the Go pin, and latest golangci-lint
     # follows automatically.)
-    GOLANGCI_VERSION=$(curl -fs "https://api.github.com/repos/golangci/golangci-lint/releases/latest" | grep -Po '"tag_name": "v\K[^"]*' || true)
+    # Resolve the tag via the API, honoring GITHUB_TOKEN when present
+    # (unauthenticated API calls rate-limit hard on shared CI IPs), then fall
+    # back to `git ls-remote`, which has no API rate limit at all.
+    auth_args=()
+    [ -n "${GITHUB_TOKEN:-}" ] && auth_args=(-H "Authorization: Bearer $GITHUB_TOKEN")
+    GOLANGCI_VERSION=$(curl -fs "${auth_args[@]}" "https://api.github.com/repos/golangci/golangci-lint/releases/latest" | grep -Po '"tag_name": "v\K[^"]*' || true)
+    if [ -z "$GOLANGCI_VERSION" ]; then
+        GOLANGCI_VERSION=$(git ls-remote --tags https://github.com/golangci/golangci-lint 2>/dev/null \
+            | grep -oP 'refs/tags/v\K[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
+    fi
     if [ -n "$GOLANGCI_VERSION" ]; then
         curl --proto '=https' --tlsv1.2 -sSfL "https://raw.githubusercontent.com/golangci/golangci-lint/v${GOLANGCI_VERSION}/install.sh" \
             | sh -s -- -b "$HOME/go/bin" "v${GOLANGCI_VERSION}"
