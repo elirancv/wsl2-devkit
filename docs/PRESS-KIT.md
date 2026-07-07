@@ -49,6 +49,51 @@ wsl2-devkit is a staged, **idempotency-proven** provisioning kit for Windows 10/
 - Architecture + flow diagrams: rendered Mermaid in the [README](../README.md#how-it-works)
 - Suggested screenshot: the verifier's green `52 passed, 0 warnings, 0 missing` summary
 
+## From A to Z — the whole setup, honestly
+
+What a brand-new user actually does, starting from nothing but Windows:
+
+1. **Check you qualify** — Windows 10 (build 19041+) or Windows 11, virtualization enabled in BIOS/UEFI (usually already is).
+1. **Get the code** (PowerShell):
+
+   ```powershell
+   git clone https://github.com/elirancv/wsl2-devkit
+   cd wsl2-devkit
+   # no git yet? Download ZIP works too - then run:  Get-ChildItem -Recurse *.ps1 | Unblock-File
+   ```
+
+1. **Stage 0 — Windows apps** *(optional)*: browser, VS Code, Windows Terminal, Git, the Nerd Font that makes terminal icons render.
+
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File .\windows\stage0-winget.ps1
+   ```
+
+1. **Stage 1 — turn on WSL2 + install Ubuntu** (as Administrator):
+
+   ```powershell
+   Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+   .\windows\stage1-windows.ps1
+   ```
+
+   It asks for **one reboot**, then you run it once more — Ubuntu installs on the second pass. Open Ubuntu from the Start menu and pick a username + password.
+
+1. **Stage 2 — the dev toolchain** (inside the new Ubuntu terminal):
+
+   ```bash
+   git clone https://github.com/elirancv/wsl2-devkit && cd wsl2-devkit
+   ./wsl/stage2-ubuntu.sh        # interactive menu - or --yes for the defaults
+   exec $SHELL -l
+   ```
+
+1. **Stage 3 — VS Code wiring** (back in PowerShell): `.\windows\stage3-vscode.ps1`
+1. **Z — prove it worked**:
+
+   ```bash
+   make verify        # 52 checks; green = you're a Linux developer now
+   ```
+
+Total: ~30 minutes, one reboot, and every step is safe to re-run if anything hiccups.
+
 ## FAQ ammunition
 
 **Is it safe to run scripts like this?** Read them first — that's the intended workflow. They're plain PowerShell/bash, MIT-licensed, no telemetry, and each release publishes SHA256 checksums so you can audit a tag and run exactly those bytes.
