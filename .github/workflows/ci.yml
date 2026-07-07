@@ -84,6 +84,15 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
+      # GitHub's runner image ships firefox as a snap-backed deb; `apt upgrade`
+      # can then stall for minutes on a huge snap download. WSL Ubuntu ships
+      # neither firefox nor active snapd, so this exercises nothing we ship -
+      # hold the packages so the smoke test measures the kit, not snap's CDN.
+      - name: Hold snap-backed packages (runner-only stall source)
+        run: |
+          sudo apt-mark hold firefox snapd 2>/dev/null || true
+          sudo snap refresh --hold 2>/dev/null || true
+
       - name: "Run 1: provision the runner with the CI profile"
         run: bash wsl/stage2-ubuntu.sh --profile tests/profiles/ci.conf
 
