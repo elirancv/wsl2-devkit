@@ -49,6 +49,21 @@ Review the diff it prints, then commit. (It updates `GO_VERSION`, `GO_SHA256_AMD
 - Update docs in the same PR — `README.md` for user-facing changes, `docs/DOCUMENTATION.md` for reference detail, and a `CHANGELOG.md` entry under an Unreleased/next-version heading.
 - If you add or rename an alias, update **both** alias tables (README + DOCUMENTATION) and the demo tape if it appears there.
 
+## Releasing (maintainers)
+
+1. Land a CHANGELOG entry for the new version via PR (Keep-a-Changelog format; the CHANGELOG is the only place versions live).
+1. From the CI-green merge commit on `main`:
+
+   ```bash
+   make checksums                       # writes checksums.txt (SHA256 of every script)
+   git tag -a vX.Y.Z -m "vX.Y.Z - summary" <merge-sha>
+   git push origin vX.Y.Z
+   gh release create vX.Y.Z --title "vX.Y.Z — summary" \
+     --notes-file <notes.md> "checksums.txt#checksums.txt (SHA256 of every script)"
+   ```
+
+1. Release notes: highlights + PR references + the `sha256sum -c checksums.txt` verify snippet. Tag only commits whose exact tree passed CI.
+
 ## Reporting Issues
 
 Bug reports with the output of `make verify` and your Windows build number (`winver`) get fixed fastest.
