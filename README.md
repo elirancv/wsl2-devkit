@@ -203,3 +203,7 @@ Full reference — every setting, the staging rationale, and troubleshooting —
 ## License
 
 [MIT](LICENSE)
+
+---
+
+<p align="center"><sub>Built with ❤️ by Eliran Cohen</sub></p>

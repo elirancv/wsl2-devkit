@@ -1,6 +1,5 @@
 # ===========================================
 # STAGE 3: VSCode/Cursor Configuration
-# Version: 4.4.0 - Production Grade
 # ===========================================
 
 $ErrorActionPreference = "Stop"
@@ -23,7 +22,6 @@ Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "  VSCode/Cursor Configuration" -ForegroundColor Cyan
 Write-Host "  Stage 3: Extensions & Settings" -ForegroundColor Cyan
-Write-Host "  Version 4.4.0 - Production Grade" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 
 # ===========================================

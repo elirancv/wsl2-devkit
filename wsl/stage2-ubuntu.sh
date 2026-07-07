@@ -2,7 +2,6 @@
 
 # ===========================================
 # Ubuntu Development Environment Setup
-# Version: 4.3.3 - Production Grade
 # ===========================================
 
 set -eEuo pipefail
@@ -45,7 +44,6 @@ clear || true   # don't let a missing TTY (piped/CI run) abort under 'set -e'
 echo ""
 echo -e "${CYAN}==========================================${NC}"
 echo -e "${CYAN}  Ubuntu Development Environment${NC}"
-echo -e "${CYAN}  Version 4.3.3 - Production Grade${NC}"
 echo -e "${CYAN}==========================================${NC}"
 echo ""
 

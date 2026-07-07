@@ -1,7 +1,6 @@
 # ===========================================
 # STAGE 1: WSL2 Installation & Configuration
 # Run as Administrator
-# Version: 4.3 - Production Grade
 # ===========================================
 
 #Requires -RunAsAdministrator
@@ -70,7 +69,6 @@ Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "  WSL2 Development Environment" -ForegroundColor Cyan
 Write-Host "  Stage 1: Windows Configuration" -ForegroundColor Cyan
-Write-Host "  Version 4.3 - Production Grade" -ForegroundColor Cyan
 Write-Host "  Supports: Windows 10 (2004+) & Windows 11" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
 

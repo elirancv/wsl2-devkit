@@ -1,6 +1,5 @@
 # ===========================================
 # Windows App Bootstrap (winget)  -  "Stage 0"
-# Version: 1.0
 # ===========================================
 # Installs the Windows-side apps for a WSL2 dev machine, then hand off to
 # stage1-windows.ps1. Idempotent: anything already installed is skipped.
