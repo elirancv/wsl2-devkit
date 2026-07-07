@@ -295,8 +295,11 @@ if $INSTALL_NODE; then
     # Global packages (incl. Claude Code CLI for `claude` in the WSL terminal;
     # the VS Code extension bundles its own copy, this covers terminal use)
     if command -v npm &> /dev/null; then
-        npm install -g typescript ts-node tsx create-vite @anthropic-ai/claude-code
-        log_success "Node.js ecosystem complete"
+        if npm install -g typescript ts-node tsx create-vite @anthropic-ai/claude-code; then
+            log_success "Node.js ecosystem complete"
+        else
+            log_warn "some global npm packages failed (network?) - re-run stage2 later"
+        fi
     else
         log_warn "npm not available - skipping global npm packages"
     fi
@@ -339,10 +342,14 @@ if $INSTALL_PYTHON; then
         log_info "Installing Python $PYTHON_VERSION..."
 
         if ! pyenv versions | grep -q "$PYTHON_VERSION"; then
-            pyenv install "$PYTHON_VERSION"
+            pyenv install "$PYTHON_VERSION" || log_warn "pyenv install $PYTHON_VERSION failed (network?) - re-run stage2 later"
         fi
-        pyenv global "$PYTHON_VERSION"
-        log_success "Python $PYTHON_VERSION installed"
+        if pyenv versions | grep -q "$PYTHON_VERSION"; then
+            pyenv global "$PYTHON_VERSION"
+            log_success "Python $PYTHON_VERSION installed"
+        else
+            log_warn "Python $PYTHON_VERSION not installed - skipping pyenv global"
+        fi
     else
         log_warn "pyenv not available - skipping Python interpreter install"
     fi
@@ -403,8 +410,8 @@ if $INSTALL_GO; then
     mkdir -p ~/go/{bin,src,pkg}
     
     # Go tools
-    /usr/local/go/bin/go install golang.org/x/tools/gopls@latest
-    /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest
+    /usr/local/go/bin/go install golang.org/x/tools/gopls@latest || log_warn "gopls install failed (network?) - re-run stage2 later"
+    /usr/local/go/bin/go install github.com/go-delve/delve/cmd/dlv@latest || log_warn "delve install failed (network?) - re-run stage2 later"
 
     # golangci-lint: track the LATEST release instead of pinning. We install the
     # latest Go (above), and golangci-lint is strict about the Go toolchain it was
@@ -660,6 +667,12 @@ if [ -n "$start_line" ]; then
     # Take the divider line above the marker with it, if present
     if [ "$prev" -ge 1 ] && sed -n "${prev}p" ~/.bashrc | grep -q "^# ====="; then
         start=$prev
+    fi
+    # Reclaim the single blank line our block writes above its divider, so
+    # repeated re-runs don't accumulate blank lines above the managed block.
+    above=$((start - 1))
+    if [ "$above" -ge 1 ] && [ -z "$(sed -n "${above}p" ~/.bashrc)" ]; then
+        start=$above
     fi
     if [ -n "$end_line" ] && [ "$end_line" -ge "$start_line" ]; then
         # Bounded delete: our block only, preserving anything the user added below

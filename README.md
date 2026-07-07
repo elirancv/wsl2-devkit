@@ -190,6 +190,27 @@ From WSL, `make help` lists the health-check and lint targets.
 
 ---
 
+## Security & trust
+
+These scripts run with your privileges — Stage 1 needs Administrator, and the WSL
+stages write your shell config, generate keys, and install toolchains. Read the
+code in [windows/](windows/) and [wsl/](wsl/) before running it. What it does and
+doesn't do:
+
+- **No telemetry, no analytics, no phone-home.** Nothing is uploaded anywhere.
+- **Keys stay local.** The Ed25519 SSH key and optional GPG signing key are
+  generated on your machine and never leave it — you paste the *public* half into
+  GitHub yourself.
+- **Downloads are over TLS from official sources.** apt uses Ubuntu's signed
+  repos; the Go tarball is **SHA256-verified** before install; the language
+  installers (nvm, pyenv, uv, bun, rustup, starship, zoxide) are the vendors'
+  official scripts fetched with `--proto '=https' --tlsv1.2`. Versions are pinned
+  where an upstream publishes stable checksums; otherwise the latest signed
+  release is used.
+- **Idempotent and network-tolerant.** Every stage is safe to re-run — the managed
+  `~/.bashrc` block is replaced (not duplicated) between markers, and a flaky
+  network on any single download degrades to a warning instead of aborting the run.
+
 ## Requirements
 
 - Windows 10 version 2004 (build 19041) or later, or Windows 11

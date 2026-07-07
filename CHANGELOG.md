@@ -16,13 +16,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - `Makefile` with `verify` / `lint` / `demo` / `help` targets (run inside WSL).
 - VHS demo (`demo/devkit-demo.tape`) rendering the animated README walkthrough
   GIF via `make demo`.
-- Project scaffolding: overhauled `README.md`, `LICENSE` (MIT), `.gitignore`,
-  `.editorconfig`, and this `CHANGELOG.md`.
+- Project scaffolding: overhauled `README.md` (incl. a **Security & trust**
+  section), `LICENSE` (MIT), `.gitignore`, `.editorconfig`, and this `CHANGELOG.md`.
 
 ### Fixed
 - `verify-setup.sh` no longer reports required failures for optional CLI tools
   or `newX` helpers you didn't select — those are now warnings, and a helper is
   only flagged as missing when its language toolchain is actually installed.
+- `stage2-ubuntu.sh` no longer accumulates blank lines above the managed
+  `~/.bashrc` block on repeated runs.
+- A flaky network during `go install`, global `npm install`, or `pyenv install`
+  now degrades to a warning instead of aborting the run before shell config.
 
 ### Removed
 - Development artifacts: `logs/` and `Install-Notes.txt`.
