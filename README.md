@@ -58,6 +58,7 @@ wsl2-devkit/
 │   ├── stage2-ubuntu.sh      # dev toolchain + shell config
 │   └── verify-setup.sh       # read-only health check
 ├── docs/
+│   ├── OVERVIEW.md           # what it is, who it's for, verify the claims
 │   └── DOCUMENTATION.md      # full reference guide
 ├── demo/                     # VHS demo (make demo)
 │   ├── devkit-demo.tape      # walkthrough script
@@ -247,7 +248,7 @@ doesn't do:
 
 ## Documentation
 
-Full reference — every setting, the staging rationale, and troubleshooting — lives in [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md). Version history is in [CHANGELOG.md](CHANGELOG.md).
+New to WSL2, or want the claims-you-can-verify summary? Start with [docs/OVERVIEW.md](docs/OVERVIEW.md). Full reference — every setting, the staging rationale, and troubleshooting — lives in [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md). Version history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Contributing
 
