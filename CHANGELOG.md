@@ -3,6 +3,24 @@
 All notable changes to wsl2-devkit are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.2.0] - 2026-07-07
+
+### Added
+- `make bump-go` — one-command update of the pinned Go version + in-repo
+  checksums (fetches release metadata, rewrites the pin, prints the diff). (#1)
+- Dependabot keeps the SHA-pinned GitHub Actions current via weekly PRs. (#3)
+
+### Fixed
+- CI smoke no longer stalls on the runner image's snap-backed firefox during
+  `apt upgrade` — the packages are held before provisioning. (#5)
+- GitHub tag lookups (golangci-lint, lazygit) are rate-limit-proof: they honor
+  `GITHUB_TOKEN` when present and fall back to `git ls-remote`, which has no
+  API rate limit. Previously they failed silently on shared CI runner IPs and
+  rate-limited networks. (#6)
+- zoxide installs from Ubuntu 24.04's signed apt repo, keeping the pinned
+  vendor script (whose internal "latest" lookup hits the rate-limited API)
+  only as a fallback for older releases. (#6)
+
 ## [5.1.0] - 2026-07-07
 
 ### Changed
