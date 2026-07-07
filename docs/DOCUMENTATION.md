@@ -33,6 +33,7 @@ flowchart TB
     EDITOR -. "code ." .-> WSL
 ```
 
+> [!IMPORTANT]
 > **Windows stays clean.** Editors, browsers and fonts live on Windows; every
 > runtime, linter and CLI tool lives in WSL2, where your code runs fast.
 
@@ -117,10 +118,11 @@ Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 .\stage1-windows.ps1
 ```
 
-**Note:** On a fresh system this script runs **twice**. The first run enables the
-required Windows features and prompts for a restart (it does *not* install Ubuntu
-yet). After rebooting, run it again (as Administrator) to install Ubuntu. If WSL
-features are already enabled, the single run installs Ubuntu directly.
+> [!NOTE]
+> On a fresh system this script runs **twice**. The first run enables the
+> required Windows features and prompts for a restart (it does *not* install Ubuntu
+> yet). After rebooting, run it again (as Administrator) to install Ubuntu. If WSL
+> features are already enabled, the single run installs Ubuntu directly.
 
 ---
 
@@ -128,7 +130,7 @@ features are already enabled, the single run installs Ubuntu directly.
 
 ## Interactive Selection Menu
 
-```
+```text
 Select what to install:
 
 Languages & Runtimes:
@@ -146,7 +148,8 @@ Security:
    Protect GPG key with a passphrase? (recommended) [y/N]: 
 ```
 
-**Note:** `[Y/n]` = Default Yes (press Enter to install), `[y/N]` = Default No
+> [!TIP]
+> `[Y/n]` = Default Yes (press Enter to install), `[y/N]` = Default No
 
 ## Always Installed (Regardless of Selection)
 
@@ -255,7 +258,7 @@ z PARTIAL    # zoxide (smart cd)
 
 ## SSH Key Generated
 
-```
+```text
 ~/.ssh/
 ├── id_ed25519       # Private key (keep secret)
 ├── id_ed25519.pub   # Public key (add to GitHub)
@@ -307,6 +310,7 @@ Extensions install in two places, because VS Code splits them by where they run:
   deliberately *not* on Windows - a local copy would be inert clutter you'd have
   to clean off later.
 
+> [!NOTE]
 > **Two-run note.** The WSL push only works once VS Code has provisioned the WSL
 > server, which happens the first time you open a WSL folder. On a **fresh**
 > machine Stage 3 usually runs *before* that, so the workspace extensions have
@@ -327,7 +331,7 @@ promises the `newweb`/`newpy`/`newgo`/`newrust` helpers exist.
 
 ## Interactive Selection Menu
 
-```
+```text
 Select extension categories to install:
 
    Install Python extensions? [Y/n]: 
@@ -351,6 +355,9 @@ Select extension categories to install:
 | **Docs** | Markdown All in One, YAML |
 
 ## Optional Extensions by Category
+
+<details>
+<summary>Expand the six category lists (Python / Go / Rust / JS / AI / DevOps)</summary>
 
 ### Python Extensions
 - Python (Microsoft)
@@ -390,6 +397,8 @@ Select extension categories to install:
 - Even Better TOML
 - Kubernetes
 
+</details>
+
 ## Settings Applied
 
 Key settings configured automatically:
@@ -417,7 +426,7 @@ Key settings configured automatically:
 
 ## Templates Created
 
-```
+```text
 %USERPROFILE%\WSL-Reference\templates\
 ├── .prettierrc      # Prettier configuration
 ├── .editorconfig    # Editor configuration
@@ -446,9 +455,12 @@ Key settings configured automatically:
 | `.\wsl-tools.ps1 update` | Update WSL and Ubuntu packages |
 | `.\wsl-tools.ps1 reset` | Delete everything and start fresh (type `DELETE` to confirm) |
 
-## Example: `status`
+## Example Outputs
 
-```
+<details>
+<summary><code>status</code></summary>
+
+```text
 WSL Version:
    WSL: 2.0.9.0
    Kernel: 5.15.133.1
@@ -465,9 +477,12 @@ Resource Limits (.wslconfig):
    processors=4
 ```
 
-## Example: `backup`
+</details>
 
-```
+<details>
+<summary><code>backup</code></summary>
+
+```text
 Distribution: Ubuntu
 Backup file: C:\Users\YOU\WSL-Backups\Ubuntu-20250119-120000.tar
 
@@ -479,9 +494,12 @@ Size: 8.2 GB
 Duration: 3.5 minutes
 ```
 
-## Example: `clean`
+</details>
 
-```
+<details>
+<summary><code>clean</code></summary>
+
+```text
 This will:
    1. Clear apt cache
    2. Remove unused packages
@@ -497,6 +515,8 @@ Compacting virtual disk...
 
 [OK] Disk compacted: 15.2 GB -> 12.1 GB (saved 3.1 GB)
 ```
+
+</details>
 
 ---
 
@@ -614,7 +634,8 @@ newrust myapp
 | Windows Explorer | `\\wsl.localhost\Ubuntu\home\USERNAME\projects` |
 | VSCode/Cursor | Open via `code .` in Ubuntu terminal |
 
-**Important:** Always work in `~/projects`, NOT `/mnt/c/...` (slow!)
+> [!WARNING]
+> Always work in `~/projects`, NOT `/mnt/c/...` — the Windows filesystem is slow across the WSL boundary.
 
 ---
 

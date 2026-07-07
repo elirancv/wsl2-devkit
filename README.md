@@ -47,7 +47,7 @@ flowchart TB
 
 ## Repository layout
 
-```
+```text
 wsl2-devkit/
 ├── windows/                  # run from Windows PowerShell
 │   ├── stage0-winget.ps1     # (optional) baseline Windows apps + Nerd Font
@@ -67,6 +67,9 @@ wsl2-devkit/
 │   └── profiles/ci.conf      # selection profile for the CI smoke test
 ├── .github/workflows/ci.yml  # ShellCheck + PSScriptAnalyzer + twice-run smoke
 ├── Makefile                  # make verify / lint / demo / help  (run in WSL)
+├── CONTRIBUTING.md           # ground rules, local checks, supply-chain policy
+├── SECURITY.md               # private vulnerability reporting
+├── AGENTS.md                 # machine context for AI coding assistants
 ├── CHANGELOG.md
 └── LICENSE
 ```
@@ -98,9 +101,11 @@ powershell -ExecutionPolicy Bypass -File .\windows\stage0-winget.ps1
 ```powershell
 Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
 .\windows\stage1-windows.ps1
-# If it asks for a restart: reboot, then run it once more.
-# Ubuntu installs on the second run, once the WSL features are active.
 ```
+
+> [!NOTE]
+> On a fresh machine this stage runs **twice**: the first run enables the WSL features and asks for a reboot; Ubuntu installs on the second run.
+
 Then open **Ubuntu** from the Start menu and create your username + password.
 
 ### Stage 2 — Dev toolchain *(in Ubuntu)*
@@ -111,7 +116,8 @@ chmod +x stage2-ubuntu.sh
 exec $SHELL -l              # reload your shell afterwards
 ```
 
-Unattended? Stage 2 also runs fully non-interactive:
+> [!TIP]
+> Stage 2 also runs fully non-interactive — the same path CI uses to test the kit:
 
 ```bash
 ./stage2-ubuntu.sh --yes            # the menu's defaults, no prompts
@@ -199,6 +205,7 @@ Full command and alias reference: [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md)
 
 From WSL, `make help` lists the health-check and lint targets.
 
+> [!IMPORTANT]
 > **Work in `~/projects`, not `/mnt/c/...`** — the Windows filesystem is slow across the WSL boundary.
 
 ---
@@ -237,6 +244,10 @@ doesn't do:
 ## Documentation
 
 Full reference — every setting, the staging rationale, and troubleshooting — lives in [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md). Version history is in [CHANGELOG.md](CHANGELOG.md).
+
+## Contributing
+
+PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the ground rules (idempotency is CI-enforced) and local checks. Security issues go through [private reporting](SECURITY.md), not the issue tracker.
 
 ## License
 
