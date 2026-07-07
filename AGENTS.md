@@ -22,7 +22,7 @@ Provisioning kit for Windows 10/11 + WSL2 Ubuntu dev machines. Bash + PowerShell
 - **Supply chain**: pinned version + in-repo SHA256 where upstream artifacts are stable (Go, nvm installer — use these as the model). Checksum mismatch = hard fail; network failure = `log_warn` and continue.
 - **Windows stays clean**: never install dev runtimes on the Windows host.
 - **verify-setup.sh is read-only** and its check count (52) is quoted in README + docs — update all three together if you add checks.
-- Version numbers live in `CHANGELOG.md` only — no version strings in script headers or banners.
+- Version numbers live in `CHANGELOG.md` and git tags only — never hardcode a version in a script header or banner. Banners show the runtime `git describe --tags` result (empty for ZIP copies), so they can't drift.
 
 ## Conventions
 

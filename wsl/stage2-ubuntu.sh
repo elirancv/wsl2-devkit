@@ -76,10 +76,14 @@ pause_enter() { $NONINTERACTIVE || read -r -p "$1" _ || true; }
 # ===========================================
 # Header
 # ===========================================
+# Release version = latest git tag when run from a clone; empty when the
+# script was copied standalone. History: CHANGELOG.md / release tags.
+DEVKIT_VERSION=$(git -C "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" describe --tags 2>/dev/null || true)
+
 clear || true   # don't let a missing TTY (piped/CI run) abort under 'set -e'
 echo ""
 echo -e "${CYAN}==========================================${NC}"
-echo -e "${CYAN}  Ubuntu Development Environment${NC}"
+echo -e "${CYAN}  Ubuntu Development Environment${DEVKIT_VERSION:+ $DEVKIT_VERSION}${NC}"
 echo -e "${CYAN}==========================================${NC}"
 echo ""
 

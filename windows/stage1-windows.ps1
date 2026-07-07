@@ -59,6 +59,17 @@ function Write-Err {
     Write-Host "   [X] $Message" -ForegroundColor Red
 }
 
+# Release version = latest git tag when run from a clone; empty for ZIP
+# downloads (no .git) or when git is missing. History: CHANGELOG.md / tags.
+$DevkitVersion = ""
+try {
+    $tag = git -C $PSScriptRoot describe --tags 2>$null
+    if ($LASTEXITCODE -eq 0 -and $tag) { $DevkitVersion = " $tag" }
+} catch { }
+# git exits 128 when there's no repo/tags; don't let that leak as the script's
+# exit code (CI's shell wrapper ends with `exit $LASTEXITCODE`)
+$global:LASTEXITCODE = 0
+
 try {
 
 # ===========================================
@@ -67,7 +78,7 @@ try {
 Clear-Host
 Write-Host ""
 Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "  WSL2 Development Environment" -ForegroundColor Cyan
+Write-Host "  WSL2 Development Environment$DevkitVersion" -ForegroundColor Cyan
 Write-Host "  Stage 1: Windows Configuration" -ForegroundColor Cyan
 Write-Host "  Supports: Windows 10 (2004+) & Windows 11" -ForegroundColor Cyan
 Write-Host "==========================================" -ForegroundColor Cyan
