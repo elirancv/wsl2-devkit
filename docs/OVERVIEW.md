@@ -8,11 +8,11 @@ What this project is, who it's for, and which of its claims you can verify yours
 
 ## In one sentence
 
-> Turn a fresh Windows PC into a professional Linux dev machine in about 30 minutes — with all of development **isolated in WSL2**, so Windows stays clean and fast no matter what you build, install, or experiment with.
+> Turn a Windows PC into a professional Linux dev machine in about 30 minutes — with all of development **isolated in WSL2**, so Windows stays clean and fast no matter what you build, install, or experiment with.
 
 ## Why isolation is the point
 
-- **Experiment freely** — languages, tools, and config live inside the Linux environment, and a factory-fresh dev machine is always one `wsl-tools.ps1 reset` away. Windows never notices.
+- **Experiment freely** — languages, tools, and config live inside the Linux environment, which you can rebuild from scratch in minutes whenever you choose. Windows never notices.
 - **Windows stays fast and clean** — no runtimes, PATH clutter, or daemons on the host. Editors, browsers, and fonts stay native; code runs where the filesystem is fast.
 - **Reversible by design** — built-in backup (rotated), validated restore, and a health check that tells you precisely what state you're in.
 - **One machine, both worlds** — full Linux tooling and native Windows apps, no dual-boot, no VM window.
