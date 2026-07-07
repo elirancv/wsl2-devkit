@@ -1,0 +1,93 @@
+# Changelog
+
+All notable changes to wsl2-devkit are documented here.
+The format is based on [Keep a Changelog](https://keepachangelog.com/).
+
+## [4.5] - 2026-07-07
+
+### Changed
+- Restructured into the **wsl2-devkit** project layout: Windows-side scripts in
+  `windows/`, WSL-side scripts in `wsl/`, reference guide in `docs/`.
+- Renamed scripts to reflect run order: `stage0-winget.ps1`, `stage1-windows.ps1`,
+  `stage2-ubuntu.sh`, `stage3-vscode.ps1` (maintenance/health-check scripts keep
+  their descriptive names). All cross-references updated.
+
+### Added
+- `Makefile` with `verify` / `lint` / `demo` / `help` targets (run inside WSL).
+- VHS demo (`demo/devkit-demo.tape`) rendering the animated README walkthrough
+  GIF via `make demo`.
+- Project scaffolding: overhauled `README.md`, `LICENSE` (MIT), `.gitignore`,
+  `.editorconfig`, and this `CHANGELOG.md`.
+
+### Fixed
+- `verify-setup.sh` no longer reports required failures for optional CLI tools
+  or `newX` helpers you didn't select — those are now warnings, and a helper is
+  only flagged as missing when its language toolchain is actually installed.
+
+### Removed
+- Development artifacts: `logs/` and `Install-Notes.txt`.
+
+## [4.4] - 2026-07-07
+
+### Added
+- `verify-setup.sh` — read-only health check for the WSL dev environment
+  (base CLI, optional Node/Python/Go/Rust toolchains, the managed `.bashrc`
+  block + `newX` helpers, project directories, git/SSH/GitHub auth, and the WSL
+  VS Code extension count). Exits non-zero if any required item is missing.
+
+### Changed
+- **stage3-vscode.ps1**: installs extensions where they actually run — only UI
+  extensions (themes + Remote-* clients) on Windows, all workspace extensions
+  (language servers, linters, formatters, debuggers) into the WSL server via
+  headless `code-server --install-extension`. Previously everything installed on
+  Windows behind a false "Remote-WSL auto-syncs them" claim, leaving the WSL side
+  empty. Honest two-run message when the WSL server isn't provisioned yet.
+- Removed the deprecated `ruff.lint.run` setting that forced Ruff onto the legacy
+  `ruff-lsp` server instead of the native (Rust) server.
+
+### Fixed (hardening pass — correctness review of the not-yet-run scripts)
+- **wsl-tools.ps1**: backup deletes a partial/corrupt `.tar` on failed export;
+  restore validates archive size before unregistering (never wipes the live
+  distro for a bad backup); reset verifies the distro is in the online catalog
+  before unregistering (never leaves the machine distro-less); clean compacts the
+  *default* distro's VHD; removed the global `OutputEncoding = Unicode` that
+  garbled UTF-8 passthrough from `wsl -- ...`.
+- **stage0-winget.ps1**: probes `winget --version` and gates
+  `--disable-interactivity` on winget ≥ 1.4 (old/stub winget on debloated Win10
+  images no longer makes every install silently fail); benign exit codes
+  (already-installed, no-op upgrade, reboot-required) no longer reported as
+  failures.
+- **stage1-windows.ps1**: strips the UTF-16 BOM from `wsl --list` output so the
+  "Ubuntu already installed" check works on the second run.
+- **stage2-ubuntu.sh**: Docker keyring `gpg --dearmor --yes` (idempotent re-run);
+  nvm/pnpm/bun/pyenv/uv/rustup/zoxide/starship installers warn-and-continue
+  instead of aborting the whole run on a transient download failure.
+
+## [4.3]
+
+### Added
+- Full Rust support: `~/projects/rust`, `newrust` helper (`cargo new`), VS Code
+  Rust extensions (rust-analyzer + CodeLLDB + Even Better TOML), `[rust]` editor
+  settings with clippy on save, `target/` in the `.gitignore` template, `*.rs` in
+  `.editorconfig`, and cargo cache clearing in `wsl-tools.ps1 clean`.
+
+## [4.2]
+
+### Fixed
+- Ubuntu detection in Stage 1 (UTF-16 output of `wsl --list` on PowerShell 5.1).
+- `.wslconfig` written without a BOM (parser compatibility).
+- Mirrored networking / dnsTunneling / autoProxy only applied on Windows 11 22H2+.
+- Stage 1 no longer runs WSL commands before the required restart (run twice).
+- Ubuntu 24.04 compatibility: `libncurses-dev` replaces removed `libncurses5-dev`.
+- lazygit download failure (GitHub rate limit) no longer aborts setup.
+- fzf keybindings load correctly (`eval "$(fzf --bash)"` + PATH fix).
+- `stage2-ubuntu.sh` is idempotent — re-running won't duplicate `.bashrc` blocks.
+- Removed the `pip='uv pip'` alias (broke pip outside virtualenvs).
+- `wsl-tools.ps1 clean` actually clears npm/pnpm caches; `restore` sets the
+  default user via `wsl --manage`.
+
+### Added
+- Go tarball SHA256 verification; golangci-lint via the official installer (v2).
+- Optional GPG passphrase protection prompt.
+- VS Code: Code Spell Checker, DotENV, Markdown All in One, YAML.
+

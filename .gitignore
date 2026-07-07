@@ -1,0 +1,27 @@
+# WSL distro exports / backups
+*.tar
+*.tar.gz
+*.vhdx
+
+# Run logs & transcripts
+logs/
+*.log
+stage*.log
+
+# Backups created by the scripts
+*.backup
+*.backup.*
+.wslconfig.backup.*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+.idea/
+
+# Local, machine-specific secrets — never commit
+*.pem
+id_ed25519
+id_ed25519.pub
