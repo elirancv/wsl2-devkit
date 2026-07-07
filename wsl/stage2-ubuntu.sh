@@ -287,6 +287,32 @@ git config --global alias.unstage "reset HEAD --"
 log_success "Git configured"
 
 # ===========================================
+# Verified installer runner
+# ===========================================
+# fetch_verified <url> <sha256> <interpreter> [args...]
+# Downloads a vendor installer to a temp file, verifies it against the SHA256
+# committed IN THIS REPO (audited at pin time - the URL is an immutable
+# tag/commit ref), then executes it. A truncated transfer or moved tag can
+# never run: checksum mismatch refuses execution and returns nonzero so call
+# sites degrade to their log_warn path. Bump a pin by updating the URL ref and
+# hash together (sha256sum the fetched script).
+fetch_verified() {
+    local url="$1" sha="$2" interp="$3" tmp rc
+    shift 3
+    tmp=$(mktemp) || return 1
+    if curl --proto '=https' --tlsv1.2 -fsSL -o "$tmp" "$url" \
+       && echo "$sha  $tmp" | sha256sum -c --quiet 2>/dev/null; then
+        "$interp" "$tmp" "$@"
+        rc=$?
+    else
+        log_warn "download failed or checksum mismatch: $url"
+        rc=1
+    fi
+    rm -f "$tmp"
+    return $rc
+}
+
+# ===========================================
 # 4. SSH Key
 # ===========================================
 log_step "Setting up SSH..."
@@ -328,12 +354,14 @@ fi
 if $INSTALL_NODE; then
     log_step "Installing Node.js ecosystem..."
     
-    # NOTE: The pipe-to-shell installers below (nvm, pnpm, bun, pyenv, uv,
-    # golangci-lint, zoxide, starship) ship no stable, published checksums we
-    # can verify against, so we harden the transport (--proto '=https'
-    # --tlsv1.2) and pin versions where possible, accepting the documented
-    # trust decision in their upstream vendors. Go DOES publish a checksum and
-    # is verified above as the model to follow.
+    # NOTE: Vendor installer scripts (nvm, bun, pyenv, uv, rustup, starship,
+    # zoxide) are pinned to immutable tag/commit refs and verified against
+    # SHA256 hashes committed in this repo via fetch_verified() - the bytes we
+    # audited are the bytes that run. Where an installer itself downloads a
+    # payload at runtime (bun, starship, zoxide binaries; rustup toolchains),
+    # that payload is the vendor's latest signed release: the installer is
+    # pinned, the tool version follows upstream. pnpm and golangci-lint remain
+    # transport-hardened only (their URLs embed no immutable ref).
     # NVM
     export NVM_DIR="$HOME/.nvm"
     if [ ! -d "$NVM_DIR" ]; then
@@ -369,11 +397,12 @@ if $INSTALL_NODE; then
         log_warn "pnpm download failed (network issue?) - install later from https://pnpm.io"
     fi
 
-    # Bun
-    if curl --proto '=https' --tlsv1.2 -fsSL https://bun.sh/install | bash; then
+    # Bun (installer pinned @ bun-v1.3.14; installs the latest bun release)
+    if fetch_verified "https://raw.githubusercontent.com/oven-sh/bun/bun-v1.3.14/src/cli/install.sh" \
+                      "bab8acfb046aac8c72407bdcce903957665d655d7acaa3e11c7c4616beae68dd" bash; then
         log_success "bun installed"
     else
-        log_warn "bun download failed (network issue?) - install later from https://bun.sh"
+        log_warn "bun install skipped - install later from https://bun.sh"
     fi
 
     # Global packages (incl. Claude Code CLI for `claude` in the WSL terminal;
@@ -407,11 +436,12 @@ if $INSTALL_PYTHON; then
         libxml2-dev \
         libxmlsec1-dev
     
-    # pyenv
+    # pyenv (installer pinned @ pyenv-installer commit 63a9e6a)
     export PYENV_ROOT="$HOME/.pyenv"
     if [ ! -d "$PYENV_ROOT" ]; then
-        curl --proto '=https' --tlsv1.2 https://pyenv.run | bash \
-            || log_warn "pyenv download failed (network issue?) - skipping Python interpreter"
+        fetch_verified "https://raw.githubusercontent.com/pyenv/pyenv-installer/63a9e6a216796aeba2535a3bac8e79ba5d95166d/bin/pyenv-installer" \
+                       "4b0adf623a6205727163eb98610b6c5e63f23b99183948b874d867cd9b30ef13" bash \
+            || log_warn "pyenv install skipped - Python interpreter not installed"
     fi
     export PATH="$PYENV_ROOT/bin:$PATH"
     if command -v pyenv &> /dev/null; then
@@ -438,11 +468,12 @@ if $INSTALL_PYTHON; then
         log_warn "pyenv not available - skipping Python interpreter install"
     fi
 
-    # uv
-    if curl --proto '=https' --tlsv1.2 -LsSf https://astral.sh/uv/install.sh | sh; then
+    # uv (versioned installer URL - pins the uv release itself, not just the script)
+    if fetch_verified "https://astral.sh/uv/0.11.27/install.sh" \
+                      "3f535ec4f066eb95c5056790cc1e06c9487a17f8e1cef202f3d76076b1579769" sh; then
         log_success "uv installed"
     else
-        log_warn "uv download failed (network issue?) - install later from https://astral.sh/uv"
+        log_warn "uv install skipped - install later from https://astral.sh/uv"
     fi
 
     # pipx + tools (needs pyenv's pip)
@@ -520,7 +551,9 @@ fi
 if $INSTALL_RUST; then
     log_step "Installing Rust..."
     
-    if curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y; then
+    # rustup-init pinned @ 1.29.0; rustup then manages toolchains itself
+    if fetch_verified "https://raw.githubusercontent.com/rust-lang/rustup/1.29.0/rustup-init.sh" \
+                      "6c30b75a75b28a96fd913a037c8581b580080b6ee9b8169a3c0feb1af7fe8caf" sh -y; then
         source "$HOME/.cargo/env"
         log_success "Rust $(rustc --version | cut -d' ' -f2) installed"
     else
@@ -592,14 +625,18 @@ if $INSTALL_CLI_TOOLS; then
     fi
     
     # zoxide
-    if curl --proto '=https' --tlsv1.2 -sS https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh | bash; then
+    # zoxide installer pinned @ v0.10.0
+    if fetch_verified "https://raw.githubusercontent.com/ajeetdsouza/zoxide/v0.10.0/install.sh" \
+                      "0c25aed6cce9d56ee0596c9a5df8cbe99ffd0f7a7054de0262234dd268b61404" bash; then
         log_success "zoxide installed"
     else
         log_warn "zoxide download failed (network issue?) - install later from https://github.com/ajeetdsouza/zoxide"
     fi
     
     # Starship
-    if curl --proto '=https' --tlsv1.2 -sS https://starship.rs/install.sh | sh -s -- -y; then
+    # starship installer pinned @ v1.26.0
+    if fetch_verified "https://raw.githubusercontent.com/starship/starship/v1.26.0/install/install.sh" \
+                      "52c64f14a558034ebeb1907ea9364e802b32474576fd3e68265f73bc33cc8fbb" sh -y; then
         log_success "Starship installed"
     else
         log_warn "Starship download failed (network issue?) - install later from https://starship.rs"

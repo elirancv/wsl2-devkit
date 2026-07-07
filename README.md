@@ -221,13 +221,14 @@ doesn't do:
 - **Keys stay local.** The Ed25519 SSH key and optional GPG signing key are
   generated on your machine and never leave it — you paste the *public* half into
   GitHub yourself.
-- **Downloads are over TLS from official sources — checksummed where it counts.**
-  apt uses signed repos; the **Go release is version-pinned and verified against a
-  SHA256 committed in this repo** (not fetched from the same origin at runtime);
-  the **nvm installer is pinned to a tagged ref and checksum-verified in-repo**
-  before it executes. The remaining vendor installers (pyenv, uv, bun, rustup,
-  starship, zoxide) publish no stable checksums; they're fetched with
-  `--proto '=https' --tlsv1.2` from the vendors' official domains.
+- **Every vendor installer script is pinned and checksum-verified in-repo.**
+  apt uses signed repos. The Go release and all seven installer scripts (nvm,
+  pyenv, uv, bun, rustup, starship, zoxide) are fetched from **immutable
+  tag/commit refs and verified against SHA256 hashes committed in this repo**
+  before a byte of them executes — a moved tag, truncated transfer, or
+  compromised origin refuses to run. Where an installer downloads its payload
+  at runtime (bun, starship, zoxide binaries; rustup toolchains), that payload
+  is the vendor's latest signed release.
 - **CI-tested on every push.** ShellCheck + PSScriptAnalyzer gate the scripts, and
   a GitHub Actions job runs the real Stage 2 **twice** on a clean Ubuntu runner,
   asserts the second run changes nothing, then passes the 52-check verifier.

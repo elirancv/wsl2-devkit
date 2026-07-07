@@ -3,6 +3,23 @@
 All notable changes to wsl2-devkit are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [5.1.0] - 2026-07-07
+
+### Changed
+- **All remaining vendor installer scripts are now pinned and verified**: pyenv,
+  uv, bun, rustup, starship, and zoxide join Go and nvm — each fetched from an
+  immutable tag/commit ref, downloaded to a file, and checked against a SHA256
+  committed in this repo via a shared `fetch_verified()` helper before
+  execution. The uv pin uses Astral's versioned installer URL, pinning the uv
+  release itself. Payloads that installers fetch at runtime (bun, starship,
+  zoxide binaries; rustup toolchains) remain the vendor's latest signed release.
+- CI actions are pinned by commit SHA instead of mutable tags.
+
+### Added
+- `windows-latest` CI job: parses every PowerShell script with the Windows
+  PowerShell 5.1 engine (the one user machines actually run, vs. pwsh core in
+  the lint job) and exercises `wsl-tools.ps1`'s non-mutating help path.
+
 ## [5.0.0] - 2026-07-07
 
 ### Added

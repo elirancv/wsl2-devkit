@@ -14,7 +14,7 @@ jobs:
     name: ShellCheck + syntax
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: bash -n + shellcheck (same set as `make lint`)
         run: |
           set -euo pipefail
@@ -29,7 +29,7 @@ jobs:
     name: PSScriptAnalyzer
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
       - name: Analyze windows/*.ps1
         shell: pwsh
         run: |
@@ -47,6 +47,33 @@ jobs:
           }
           Write-Host "No PSScriptAnalyzer errors."
 
+  windows-powershell:
+    name: "Windows PowerShell 5.1 parse + non-mutating paths"
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      # User machines run these via powershell.exe (5.1) - parse with THAT
+      # engine, since PSScriptAnalyzer in the lint job runs on pwsh core.
+      - name: Parse all scripts with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $failed = $false
+          Get-ChildItem windows -Filter *.ps1 | ForEach-Object {
+            $tokens = $null; $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count) {
+              $failed = $true
+              Write-Host "PARSE ERRORS in $($_.Name):"
+              $errors | ForEach-Object { Write-Host ("  line {0}: {1}" -f $_.Extent.StartLineNumber, $_.Message) }
+            } else {
+              Write-Host "[OK] $($_.Name)"
+            }
+          }
+          if ($failed) { exit 1 }
+      - name: wsl-tools.ps1 help path (touches no WSL state)
+        shell: powershell
+        run: .\windows\wsl-tools.ps1 help
+
   smoke-stage2:
     name: "stage2 end-to-end: install twice, verify"
     runs-on: ubuntu-latest
@@ -55,7 +82,7 @@ jobs:
       GIT_NAME: CI Smoke
       GIT_EMAIL: ci@example.invalid
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: "Run 1: provision the runner with the CI profile"
         run: bash wsl/stage2-ubuntu.sh --profile tests/profiles/ci.conf
