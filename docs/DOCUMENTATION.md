@@ -641,6 +641,31 @@ newrust myapp
 
 # Troubleshooting
 
+## PowerShell Refuses to Run the Scripts ("not digitally signed")
+
+The scripts are unsigned, so `RemoteSigned` blocks them whenever Windows considers the *file* remote. Two common triggers:
+
+- **Downloaded as ZIP** — extraction preserves the Mark of the Web. Clear it once from the extracted folder:
+
+  ```powershell
+  Get-ChildItem -Recurse *.ps1 | Unblock-File
+  ```
+
+- **Running from `\\wsl.localhost\...`** — UNC paths always count as remote and `Unblock-File` cannot help. Copy the `windows/` folder to a local path (or `git clone` on the Windows side, which never applies the Mark of the Web) and run from there.
+
+Then make sure local scripts are allowed (once per shell engine — Windows PowerShell 5.1 and PowerShell 7 keep **separate** policies):
+
+```powershell
+Get-ExecutionPolicy -List
+Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+One-shot alternative that changes nothing persistent:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\wsl-tools.ps1 status
+```
+
 ## WSL Not Starting
 ```powershell
 wsl --shutdown
