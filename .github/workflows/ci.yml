@@ -14,7 +14,7 @@ jobs:
     name: ShellCheck + syntax
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: bash -n + shellcheck (same set as `make lint`)
         run: |
           set -euo pipefail
@@ -29,7 +29,7 @@ jobs:
     name: PSScriptAnalyzer
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - name: Analyze windows/*.ps1
         shell: pwsh
         run: |
@@ -51,7 +51,7 @@ jobs:
     name: "Windows PowerShell 5.1 parse + non-mutating paths"
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       # User machines run these via powershell.exe (5.1) - parse with THAT
       # engine, since PSScriptAnalyzer in the lint job runs on pwsh core.
       - name: Parse all scripts with Windows PowerShell 5.1
@@ -82,7 +82,7 @@ jobs:
       GIT_NAME: CI Smoke
       GIT_EMAIL: ci@example.invalid
     steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       # GitHub's runner image ships firefox as a snap-backed deb; `apt upgrade`
       # can then stall for minutes on a huge snap download. WSL Ubuntu ships
